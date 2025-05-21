@@ -33,7 +33,9 @@ app.get('/api/recenzije', async (req, res) => {
 // === 4. ROUTE: POST nova recenzija ===
 app.post('/api/recenzije', async (req, res) => {
     const nova = req.body
+    console.log('Primljen podatak:', nova)
     if (!nova.ime || !nova.komentar) {
+        console.log('Primljena recenzija:', nova)
         return res.status(400).json({ success: false, message: 'Ime i komentar su obavezni.' })
     }
 
