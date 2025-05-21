@@ -6,7 +6,9 @@ const app = express()
 const PORT = process.env.PORT || 4000
 
 // === 1. POVEZIVANJE SA MONGODB ATLAS ===
-const uri = 'mongodb+srv://bokeejusthard:zeka@cluster0.ejxukug.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
+
+const uri = "mongodb+srv://bokeejusthard:zeka@cluster0.ejxukug.mongodb.net/kokko?retryWrites=true&w=majority&appName=Cluster0";
+
 const client = new MongoClient(uri)
 let collection
 
