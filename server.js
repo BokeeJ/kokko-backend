@@ -1,6 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import { MongoClient, ObjectId } from 'mongodb'
+console.log("🧪 TEST: OVA VERZIJA SERVERA JE UČITANA");
 
 const app = express()
 const PORT = process.env.PORT || 4000
