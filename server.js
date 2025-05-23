@@ -6,64 +6,72 @@ const app = express()
 const PORT = process.env.PORT || 4000
 
 // === 1. POVEZIVANJE SA MONGODB ATLAS ===
-
-const uri = process.env.MONGO_URI;
-
-const client = new MongoClient(uri)
-let collection
+const uri = 'mongodb+srv://bokeejusthard:Prikolica1@cluster0.ejxukug.mongodb.net/kokko?retryWrites=true&w=majority&appName=Cluster0';
+const client = new MongoClient(uri);
+let collection;
 
 client.connect().then(() => {
-    const db = client.db('kokko')               // ime baze
-    collection = db.collection('recenzije')     // ime kolekcije
-    console.log('✅ Povezan sa MongoDB Atlas')
-}).catch(err => console.error('❌ Greška pri povezivanju sa bazom:', err))
+    const db = client.db('kokko');
+    collection = db.collection('recenzije');
+    console.log('✅ Povezan sa MongoDB Atlas');
+}).catch(err => console.error('❌ Greška pri povezivanju sa bazom:', err));
 
 // === 2. MIDDLEWARE ===
-app.use(cors())
-app.use(express.json())
+app.use(cors());
+app.use(express.json());
 
-// === 3. ROUTE: GET sve recenzije ===
+// === 3. GET sve recenzije ===
 app.get('/api/recenzije', async (req, res) => {
     try {
-        const svi = await collection.find().toArray()
-        res.json(svi)
+        const svi = await collection.find().toArray();
+        res.json(svi);
     } catch (err) {
-        res.status(500).json({ success: false, message: 'Greška pri čitanju recenzija.' })
+        console.error('❌ Greška pri čitanju recenzija:', err.message);
+        console.error('📛 Detalji greške:', err);
+        res.status(500).json({ success: false, message: 'Greška pri čitanju recenzija.' });
     }
-})
+});
 
-// === 4. ROUTE: POST nova recenzija ===
+// === 4. POST nova recenzija ===
 app.post('/api/recenzije', async (req, res) => {
-    const nova = req.body
-    console.log('Primljen podatak:', nova)
-    if (!nova.ime || !nova.komentar) {
+    const nova = req.body;
 
-        return res.status(400).json({ success: false, message: 'Ime i komentar su obavezni.' })
+    if (!nova.ime?.trim() || !nova.komentar?.trim() || isNaN(nova.ocena)) {
+        return res.status(400).json({ success: false, message: 'Ime, komentar i ocena su obavezni.' });
     }
+
+    nova.ocena = Number(nova.ocena);
+    nova.datum = new Date();
+
+    console.log('📦 Pokušaj upisa dokumenta:', nova);
 
     try {
-        await collection.insertOne(nova)
-        res.json({ success: true })
+        await collection.insertOne(nova);
+        console.log('✅ Upis uspešan');
+        res.json({ success: true });
     } catch (err) {
-        res.status(500).json({ success: false, message: 'Greška pri dodavanju recenzije.' })
+        console.error('❌ Greška pri dodavanju:', err.message);
+        console.error('📛 Detalji greške:', err);
+        res.status(500).json({ success: false, message: 'Greška pri dodavanju recenzije.' });
     }
-})
+});
 
-// === 5. ROUTE: DELETE recenzija po ID-ju (opciono) ===
+// === 5. DELETE recenzija po ID-ju ===
 app.delete('/api/recenzije/:id', async (req, res) => {
     try {
-        const result = await collection.deleteOne({ _id: new ObjectId(req.params.id) })
+        const result = await collection.deleteOne({ _id: new ObjectId(req.params.id) });
         if (result.deletedCount === 1) {
-            res.json({ success: true })
+            res.json({ success: true });
         } else {
-            res.status(404).json({ success: false, message: 'Recenzija nije pronađena.' })
+            res.status(404).json({ success: false, message: 'Recenzija nije pronađena.' });
         }
     } catch (err) {
-        res.status(500).json({ success: false, message: 'Greška pri brisanju.' })
+        console.error('❌ Greška pri brisanju:', err.message);
+        res.status(500).json({ success: false, message: 'Greška pri brisanju recenzije.' });
     }
-})
+});
 
 // === 6. START SERVER ===
 app.listen(PORT, () => {
-    console.log(`🚀 Server radi na portu ${PORT}`)
-})
+    console.log(`🚀 Server radi na portu ${PORT}`);
+});
