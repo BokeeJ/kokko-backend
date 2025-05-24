@@ -1,6 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import { MongoClient, ObjectId } from 'mongodb'
+
 console.log("🧪 TEST: OVA VERZIJA SERVERA JE UČITANA");
 
 const app = express()
@@ -41,8 +42,26 @@ app.post('/api/recenzije', async (req, res) => {
         return res.status(400).json({ success: false, message: 'Ime, komentar i ocena su obavezni.' });
     }
 
+    // Dohvati IP adresu korisnika
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    const clientIp = ip.split(',')[0].trim();
+
+    // Proveri da li je već poslao recenziju danas
+    const danas = new Date();
+    danas.setHours(0, 0, 0, 0);
+
+    const duplikat = await collection.findOne({
+        ip: clientIp,
+        datum: { $gte: danas }
+    });
+
+    if (duplikat) {
+        return res.status(403).json({ success: false, message: 'Već ste ostavili recenziju danas.' });
+    }
+
     nova.ocena = Number(nova.ocena);
     nova.datum = new Date();
+    nova.ip = clientIp;
 
     console.log('📦 Pokušaj upisa dokumenta:', nova);
 
